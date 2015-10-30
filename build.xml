@@ -14,14 +14,14 @@
   
   <target name="compile-master" depends="init">
     <javac srcdir="src" destdir="target/master/WEB-INF/classes" includes="**/master/*.java" deprecation="on"
-     debug="true" includeantruntime="false" classpath="lib/servlet-api.jar">
+     debug="true" includeantruntime="false" classpath="lib/servlet-api.jar;lib/log4j-1.2.9.jar">
        <compilerarg value="-Xlint"/>
     </javac>
   </target>
   
   <target name="compile-worker" depends="init">
     <javac srcdir="src" destdir="target/worker/WEB-INF/classes" includes="**/worker/*.java" deprecation="on"
-     debug="true" includeantruntime="false" classpath="lib/servlet-api.jar">
+     debug="true" includeantruntime="false" classpath="lib/servlet-api.jar;lib/log4j-1.2.9.jar">
        <compilerarg value="-Xlint"/>
     </javac>
   </target>

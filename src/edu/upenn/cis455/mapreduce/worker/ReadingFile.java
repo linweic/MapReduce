@@ -24,10 +24,11 @@ public class ReadingFile {
 		final int threadCount = 5;
 		BlockingQueue<String> queue = new ArrayBlockingQueue<String>(200);
 		ExecutorService service = Executors.newFixedThreadPool(threadCount);
-		
+		/*
 		for(int i = 0; i<5; i++){
 			service.submit(new WorkerThread(queue,"edu.upenn.cis455.mapreduce.job.WordCount"));
 		}
+		*/
 		File folder = new File("./testDir");
 		File[] files = folder.listFiles();
 		int length = files.length;
