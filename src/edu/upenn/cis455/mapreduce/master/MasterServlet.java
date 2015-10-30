@@ -50,31 +50,31 @@ public class MasterServlet extends HttpServlet {
 	  client.setRequestBody(sb);
 	  client.requestFlush();
 	  BufferedReader br = client.getInputStreamReader();
-	  System.out.println("[debug]first line from /runreduce response: "+ br.readLine());
+	  logger.debug("[debug]first line from /runreduce response: "+ br.readLine());
 	  client.closeClient();
 	  
   }
   @SuppressWarnings("unchecked")
   public void doPost(HttpServletRequest request, HttpServletResponse response) throws java.io.IOException{
 	  String pathInfo = request.getPathInfo();
-	  System.out.println("[debug] submitted form's path info is: "+ pathInfo);
+	  logger.debug("[debug] submitted form's path info is: "+ pathInfo);
 	  if(pathInfo.equalsIgnoreCase("/status")){
 		  jobParams = request.getParameterMap();
 		  
-		  System.out.println("-----Job parameters-----");
+		  logger.debug("-----Job parameters-----");
 		  for(String jobkey: jobParams.keySet()){
-			  System.out.println(jobkey+": "+jobParams.get(jobkey));
+			  logger.debug(jobkey+": "+jobParams.get(jobkey));
 		  }
-		  System.out.println("----------");
+		  logger.debug("----------");
 		  
 		  for(String workerKey: workerMap.keySet()){
 			  Map<String, String> paramMap = workerMap.get(workerKey);
 			  String status = paramMap.get("status");
-			  System.out.println("[debug] worker "+ workerKey+"'s status is "+status);
+			  logger.debug("[debug] worker "+ workerKey+"'s status is "+status);
 			  if(status.equals("idle")){
 				  String[] strings = workerKey.split(":");
-				  System.out.println("[debug] worker's IP address is "+strings[0]);
-				  System.out.println("[debug] worker's port number is "+strings[1]);
+				  logger.debug("[debug] worker's IP address is "+strings[0]);
+				  logger.debug("[debug] worker's port number is "+strings[1]);
 				  InetAddress ipAddress = InetAddress.getByName(strings[0]);
 				  HttpClient client = new HttpClient(ipAddress, Integer.valueOf(strings[1]),paramMap);
 				  client.setRequestMethod("post");
@@ -102,7 +102,7 @@ public class MasterServlet extends HttpServlet {
 				  client.setRequestBody(sb);
 				  client.requestFlush();
 				  BufferedReader br = client.getInputStreamReader();
-				  System.out.println("[debug]first line response from /runmap: "+ br.readLine());
+				  logger.debug("[debug]first line response from /runmap: "+ br.readLine());
 				  client.closeClient();
 			  }
 		  }
@@ -124,8 +124,8 @@ public class MasterServlet extends HttpServlet {
     
     String pathInfo = request.getPathInfo();
     String contextPath = request.getContextPath();
-    System.out.println("[debug] path info: "+pathInfo);
-    System.out.println("[debug] context path(webapp): "+ contextPath);
+    logger.debug("[debug] path info: "+pathInfo);
+    logger.debug("[debug] context path(webapp): "+ contextPath);
     if(pathInfo.equalsIgnoreCase("/workerstatus")){
     	IP = request.getRemoteAddr();
     	port = request.getParameter("port");
@@ -134,11 +134,11 @@ public class MasterServlet extends HttpServlet {
     	@SuppressWarnings("unchecked")
 		Map<String,String> paramMap = request.getParameterMap();
     	
-    	System.out.println("-----worker status map-----");
+    	logger.debug("-----worker status map-----");
     	for(String key : paramMap.keySet()){
-    		System.out.println(key+": "+paramMap.get(key));
+    		logger.debug(key+": "+paramMap.get(key));
     	}
-    	System.out.println("-----------");
+    	logger.debug("-----------");
     	
     	Date date = new Date();
     	long time = date.getTime();
@@ -164,13 +164,13 @@ public class MasterServlet extends HttpServlet {
    	
     	Date date = new Date();
     	long current = date.getTime();
-    	if(workerMap.keySet().isEmpty() == true) System.out.println("[info]no workers submitted their status yet.");
+    	if(workerMap.keySet().isEmpty() == true) logger.debug("[info]no workers submitted their status yet.");
     	else{
     		for(String key:workerMap.keySet()){
     			Map<String,String> paramMap = workerMap.get(key);
     			String lastSubmittedTime = paramMap.get("lastSubmit");
     			if(current - Long.valueOf(lastSubmittedTime)<30000){
-    				System.out.println("[info]"+key+" worker is active");
+    				logger.info("[info]"+key+" worker is active");
     				status = paramMap.get("status");
     				job = paramMap.get("job");
     				keysRead = paramMap.get("keysRead");
@@ -182,7 +182,7 @@ public class MasterServlet extends HttpServlet {
     				out.println("<td>"+keysWritten+"</td></tr>");
     			}
     			else{
-    				System.out.println("[debug]this worker "+key+" is not activem, remove it from workerMap");
+    				logger.debug("[debug]this worker "+key+" is not activem, remove it from workerMap");
     				workerMap.remove(key);
     			}
     		}
@@ -191,7 +191,7 @@ public class MasterServlet extends HttpServlet {
     	
     	StringBuffer action = new StringBuffer(contextPath);
     	action.append(pathInfo);
-    	System.out.println("[debug]/status form post route is: "+ action);
+    	logger.debug("[debug]/status form post route is: "+ action);
     	out.println("<form action="+action+" method=\"post\">");
     	out.println("class name of job:<br>");
     	out.println("<input type=\"text\" name=\"job\"><br>");

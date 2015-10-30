@@ -9,7 +9,10 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 public class HttpClient {
+	static final Logger logger = Logger.getLogger(HttpClient.class);
 	private Socket clientSocket;
 	private PrintWriter out;
 	private BufferedReader in;

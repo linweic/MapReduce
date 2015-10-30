@@ -10,6 +10,8 @@ import java.util.concurrent.TimeUnit;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
+import org.apache.log4j.Logger;
+
 import edu.upenn.cis455.mapreduce.Context;
 import edu.upenn.cis455.mapreduce.ContextImpl;
 import edu.upenn.cis455.mapreduce.Job;
@@ -17,28 +19,29 @@ import edu.upenn.cis455.mapreduce.Job;
 public class WorkerServlet extends HttpServlet {
 
   static final long serialVersionUID = 455555002;
+  static final Logger logger = Logger.getLogger(WorkerServlet.class);
   
   public synchronized void readFileToMemo(BlockingQueue<String> queue, BufferedReader br) throws IOException, InterruptedException{
 		String line;
 		while((line = br.readLine())!=null){
 			queue.put(line);
-			System.out.println(Thread.currentThread().getName()+" [FileTask]"+line+" added to the queue");
+			logger.debug(Thread.currentThread().getName()+" [FileTask]"+line+" added to the queue");
 		}
   }
   public void doPost(HttpServletRequest request, HttpServletResponse response) throws java.io.IOException{
 	  String comb = getServletConfig().getInitParameter("master");
-	  System.out.println("-----worker debug section-----");
-	  System.out.println("[debug]ip:port of this master is =>"+comb);
+	  logger.debug("-----worker debug section-----");
+	  logger.debug("[debug]ip:port of this master is =>"+comb);
 	  
 	  String pathInfo = request.getPathInfo();
 	  String remoteAddr = request.getRemoteAddr();
 	  int remotePort = request.getRemotePort();
 	  String remoteComb = remoteAddr.concat(":").concat(String.valueOf(remotePort));
-	  System.out.println("[debug] remote ip:port is=>"+remoteComb);
-	  System.out.println("[debug] worker path info: "+ pathInfo);
+	  logger.debug("[debug] remote ip:port is=>"+remoteComb);
+	  logger.debug("[debug] worker path info: "+ pathInfo);
 	  if(pathInfo.equalsIgnoreCase("/runmap")){
 		  if(remoteComb.equals(comb)){
-			  System.out.println("worker receives post request from master");
+			  logger.debug("worker receives post request from master");
 			  String jobName = request.getParameter("job");
 			  String input = request.getParameter("input");
 			  String num = request.getParameter("numThreads");
@@ -66,7 +69,7 @@ public class WorkerServlet extends HttpServlet {
 			  for(int i = 0; i<numThreads; i++){
 					service.submit(new WorkerThread(queue, jobInstance, contextInstance));
 			  }
-			  System.out.println("[debug] input directory is"+input);
+			  logger.debug("[debug] input directory is"+input);
 			  File folder = new File(input);
 			  File[] files = folder.listFiles();
 			  int length = files.length;
@@ -88,7 +91,7 @@ public class WorkerServlet extends HttpServlet {
 			}
 		  }
 		  else{
-			  System.out.println("worker receives post request from other workers");
+			  logger.debug("worker receives post request from other workers");
 		  }
 	  }
   }
@@ -96,8 +99,8 @@ public class WorkerServlet extends HttpServlet {
        throws java.io.IOException
   {
 	  String comb = getServletConfig().getInitParameter("master");
-	  System.out.println("-----worker debug section-----");
-	  System.out.println("[debug]ip:port of this master is =>"+comb);
+	  logger.debug("-----worker debug section-----");
+	  logger.debug("[debug]ip:port of this master is =>"+comb);
 	  String[] strings = comb.split(":");
 	  String masterIP = strings[0];
 	  String masterPort = strings[1];

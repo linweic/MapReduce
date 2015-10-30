@@ -2,10 +2,13 @@ package edu.upenn.cis455.mapreduce.worker;
 
 import java.util.concurrent.BlockingQueue;
 
+import org.apache.log4j.Logger;
+
 import edu.upenn.cis455.mapreduce.Context;
 import edu.upenn.cis455.mapreduce.Job;
 
 public class WorkerThread implements Runnable{
+	static final Logger logger = Logger.getLogger(WorkerThread.class);
 	private final BlockingQueue<String> queue;
 	private Job job;
 	private Context context;
@@ -23,13 +26,13 @@ public class WorkerThread implements Runnable{
 			try {
 				line = queue.take();
 				String[] strings = line.split("\\t");
-				System.out.println("----------");
-				System.out.println(Thread.currentThread().getName()+":"+strings[0]+"\t"+strings[1]);
+				logger.debug("----------");
+				logger.debug(Thread.currentThread().getName()+":"+strings[0]+"\t"+strings[1]);
 				job.map(strings[0], strings[1], context);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				//e.printStackTrace();
-				System.out.println(Thread.currentThread().getName()+": interrupted");
+				logger.debug(Thread.currentThread().getName()+": interrupted");
 			}
 		}
 	}
