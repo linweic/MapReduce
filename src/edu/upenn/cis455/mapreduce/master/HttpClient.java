@@ -60,6 +60,13 @@ public class HttpClient {
 	}
 	public void requestFlush(){
 		out.flush();
+	}
+	public BufferedReader getInputStreamReader(){
+		return in;
+	}
+	public void closeClient() throws IOException{
 		out.close();
+		in.close();
+		clientSocket.close();
 	}
 }

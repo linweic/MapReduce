@@ -9,7 +9,9 @@ import java.util.Map;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
-import org.apache.log4j.*;
+import org.apache.log4j.Logger;
+
+
 
 //import org.apache.log4j.Logger;
 
@@ -27,8 +29,30 @@ public class MasterServlet extends HttpServlet {
 	  }
 	  return true;
   }
-  private void postToReduce(InetAddress address, String port) throws NumberFormatException, IOException{
-	  HttpClient client = new HttpClient(address, Integer.valueOf(port));
+  private void postToReduce(InetAddress address, String port, Map<String, String> workerParams) throws IOException{
+	  HttpClient client = new HttpClient(address, Integer.valueOf(port), workerParams);
+	  client.setRequestMethod("post");
+	  try {
+		client.setRequestURL(workerParams.get("name"),"/runreduce");
+		} catch (Exception e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+		}
+	  client.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+	  
+	  StringBuffer sb = new StringBuffer();
+	  sb.append("job=").append(jobParams.get("job")).append("&");
+	  sb.append("output=").append(jobParams.get("outputDirectory")).append("&");
+	  sb.append("numThreads=").append(jobParams.get("reduceThreadsNumber"));
+	  int length = sb.length();
+	  
+	  client.setRequestHeader("Content-Length", String.valueOf(length));
+	  client.setRequestBody(sb);
+	  client.requestFlush();
+	  BufferedReader br = client.getInputStreamReader();
+	  System.out.println("[debug]first line from /runreduce response: "+ br.readLine());
+	  client.closeClient();
+	  
   }
   @SuppressWarnings("unchecked")
   public void doPost(HttpServletRequest request, HttpServletResponse response) throws java.io.IOException{
@@ -36,6 +60,13 @@ public class MasterServlet extends HttpServlet {
 	  System.out.println("[debug] submitted form's path info is: "+ pathInfo);
 	  if(pathInfo.equalsIgnoreCase("/status")){
 		  jobParams = request.getParameterMap();
+		  
+		  System.out.println("-----Job parameters-----");
+		  for(String jobkey: jobParams.keySet()){
+			  System.out.println(jobkey+": "+jobParams.get(jobkey));
+		  }
+		  System.out.println("----------");
+		  
 		  for(String workerKey: workerMap.keySet()){
 			  Map<String, String> paramMap = workerMap.get(workerKey);
 			  String status = paramMap.get("status");
@@ -70,6 +101,9 @@ public class MasterServlet extends HttpServlet {
 				  client.setRequestHeader("Content-Length", String.valueOf(length));
 				  client.setRequestBody(sb);
 				  client.requestFlush();
+				  BufferedReader br = client.getInputStreamReader();
+				  System.out.println("[debug]first line response from /runmap: "+ br.readLine());
+				  client.closeClient();
 			  }
 		  }
 	  }
@@ -95,10 +129,17 @@ public class MasterServlet extends HttpServlet {
     if(pathInfo.equalsIgnoreCase("/workerstatus")){
     	IP = request.getRemoteAddr();
     	port = request.getParameter("port");
-    	comb = IP.concat(port);
+    	comb = IP + ":" + port;
     	hostname = request.getRemoteHost();
     	@SuppressWarnings("unchecked")
-		Map<String,String> paramMap = request.getParameterMap();    
+		Map<String,String> paramMap = request.getParameterMap();
+    	
+    	System.out.println("-----worker status map-----");
+    	for(String key : paramMap.keySet()){
+    		System.out.println(key+": "+paramMap.get(key));
+    	}
+    	System.out.println("-----------");
+    	
     	Date date = new Date();
     	long time = date.getTime();
     	receivedTime = String.valueOf(time);
@@ -108,7 +149,7 @@ public class MasterServlet extends HttpServlet {
     	if(isWaiting(workerMap) == true){
     		for(String key: workerMap.keySet()){
     			String[] strings = key.split(":");
-    			postToReduce(InetAddress.getByName(strings[0]),strings[1]);
+    			postToReduce(InetAddress.getByName(strings[0]),strings[1], workerMap.get(key));
     		}
     	};
     }
