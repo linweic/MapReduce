@@ -18,10 +18,7 @@ public class WorkerServlet extends HttpServlet {
 		  String jobName = request.getParameter("job");
 		  String input = request.getParameter("input");
 		  String numThreads = request.getParameter("numThreads");
-		  
-		  for(int i = 0; i<numThread; i++){
-			  
-		  }
+		  		  
 		  try {
 			Class<?> jobClass = Class.forName(jobName);
 			Job jobInstance = (Job)jobClass.newInstance();
