@@ -28,13 +28,16 @@ public class ReadingFile {
 		for(int i = 0; i<threadCount-1; i++){
 			service.submit(new WorkerThread(queue));
 		}		
-		File folder = new File("./testDir");
+		File folder = new File("/home/cis455/workspace/hw3/testDir");
 		File[] files = folder.listFiles();
 		int length = files.length;
-		for(int j = 0; j<length;j++){
+		for(int j = 0; j<length-1;j++){
 			BufferedReader br = new BufferedReader(new FileReader(files[j]));
 			service.submit(new FileTask(queue,br)).get();
+			//readFileToMemo(queue,br);
 		}
 		service.shutdown();
+		service.awaitTermination(365,TimeUnit.DAYS);
+		
 	}
 }
