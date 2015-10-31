@@ -3,6 +3,7 @@ package edu.upenn.cis455.mapreduce.worker;
 import java.io.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +67,7 @@ public class WorkerServlet extends HttpServlet {
 			  
 			  BlockingQueue<String> queue = new ArrayBlockingQueue<String>(200);
 			  ExecutorService service = Executors.newFixedThreadPool(Integer.valueOf(numThreads));
-			  for(int i = 0; i<numThreads; i++){
+			  for(int i = 0; i<numThreads-1; i++){
 					service.submit(new WorkerThread(queue, jobInstance, contextInstance));
 			  }
 			  logger.debug("[debug] input directory is"+input);
@@ -76,19 +77,13 @@ public class WorkerServlet extends HttpServlet {
 			  for(int j = 0; j<length;j++){
 					BufferedReader br = new BufferedReader(new FileReader(files[j]));
 					try {
-						readFileToMemo(queue, br);
-					} catch (InterruptedException e) {
+						service.submit(new FileTask(queue,br)).get();
+					} catch (InterruptedException | ExecutionException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 			  }
-			  service.shutdownNow();
-			  try {
-				service.awaitTermination(365,TimeUnit.DAYS);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			  service.shutdown();
 		  }
 		  else{
 			  logger.debug("worker receives post request from other workers");

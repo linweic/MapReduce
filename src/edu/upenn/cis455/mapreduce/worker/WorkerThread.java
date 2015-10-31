@@ -18,6 +18,9 @@ public class WorkerThread implements Runnable{
 		job = jobInstance;
 		context = contextInstance;
 	}
+	public WorkerThread(BlockingQueue<String> queue){
+		this.queue = queue;
+	}
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
@@ -26,13 +29,13 @@ public class WorkerThread implements Runnable{
 			try {
 				line = queue.take();
 				String[] strings = line.split("\\t");
-				logger.debug("----------");
+				//logger.debug("----------");
 				logger.debug(Thread.currentThread().getName()+":"+strings[0]+"\t"+strings[1]);
-				job.map(strings[0], strings[1], context);
+				//job.map(strings[0], strings[1], context);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				//e.printStackTrace();
-				logger.debug(Thread.currentThread().getName()+": interrupted");
+				logger.debug(Thread.currentThread().getName()+": interrupted unexpectedly.");
 			}
 		}
 	}

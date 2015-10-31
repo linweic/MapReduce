@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class ReadingFile {
-	public static synchronized void readFileToMemo(BlockingQueue<String> queue, BufferedReader br) throws IOException, InterruptedException{
+	public static void readFileToMemo(BlockingQueue<String> queue, BufferedReader br) throws IOException, InterruptedException{
 		String line;
 		while((line = br.readLine())!=null){
 			queue.put(line);
@@ -24,24 +24,17 @@ public class ReadingFile {
 		final int threadCount = 5;
 		BlockingQueue<String> queue = new ArrayBlockingQueue<String>(200);
 		ExecutorService service = Executors.newFixedThreadPool(threadCount);
-		/*
-		for(int i = 0; i<5; i++){
-			service.submit(new WorkerThread(queue,"edu.upenn.cis455.mapreduce.job.WordCount"));
-		}
-		*/
+		
+		for(int i = 0; i<threadCount-1; i++){
+			service.submit(new WorkerThread(queue));
+		}		
 		File folder = new File("./testDir");
 		File[] files = folder.listFiles();
 		int length = files.length;
-
 		for(int j = 0; j<length;j++){
-			//System.out.println(files[j]);
 			BufferedReader br = new BufferedReader(new FileReader(files[j]));
-			//service.submit(new FileTask(queue,br)).get();
-			readFileToMemo(queue, br);
+			service.submit(new FileTask(queue,br)).get();
 		}
-		
-		
-		service.shutdownNow();
-		service.awaitTermination(365,TimeUnit.DAYS);
+		service.shutdown();
 	}
 }
