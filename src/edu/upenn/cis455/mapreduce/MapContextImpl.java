@@ -51,7 +51,7 @@ public class MapContextImpl implements Context{
 		logger.debug("the key should be hashed to file["+i+"]");
 		return i;
 	}
-	private void writeToFile(File file, StringBuffer sb) throws IOException{
+	private synchronized void writeToFile(File file, StringBuffer sb) throws IOException{
 		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file,true)));
 		pw.println(sb.toString());
 		pw.close();

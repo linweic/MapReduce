@@ -16,7 +16,7 @@ public class ReduceContextImpl implements Context{
 	public ReduceContextImpl(File file){
 		outputFile = file;
 	}
-	private void writeToFile(File file, StringBuffer sb) throws IOException{
+	private synchronized void writeToFile(File file, StringBuffer sb) throws IOException{
 		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file,true)));
 		pw.println(sb.toString());
 		pw.close();
