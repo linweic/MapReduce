@@ -24,20 +24,31 @@ public class ReadingFile {
 		final int threadCount = 5;
 		BlockingQueue<String> queue = new ArrayBlockingQueue<String>(200);
 		ExecutorService service = Executors.newFixedThreadPool(threadCount);
-		
+		/*
 		for(int i = 0; i<threadCount-1; i++){
-			service.submit(new WorkerThread(queue));
+			service.submit(new MapThread(queue));
 		}		
 		File folder = new File("/home/cis455/workspace/hw3/testDir");
 		File[] files = folder.listFiles();
 		int length = files.length;
 		for(int j = 0; j<length-1;j++){
+			System.out.println(files[j].getName());
 			BufferedReader br = new BufferedReader(new FileReader(files[j]));
 			service.submit(new FileTask(queue,br)).get();
 			//readFileToMemo(queue,br);
 		}
 		service.shutdown();
 		service.awaitTermination(365,TimeUnit.DAYS);
+		*/
+		for(int i = 0; i<threadCount; i++){
+			service.submit(new ReduceThread(queue));
+		}	
+		File file = new File("/home/cis455/workspace/hw3/testDir/reducetest");
+		BufferedReader br = new BufferedReader(new FileReader(file));
+		//service.submit(new FileTask(queue,br)).get();
+		readFileToMemo(queue,br);
+		service.shutdown();
+		//service.awaitTermination(365,TimeUnit.DAYS);
 		
 	}
 }

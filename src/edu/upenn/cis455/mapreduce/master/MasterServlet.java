@@ -22,6 +22,28 @@ public class MasterServlet extends HttpServlet {
   private Map<String, Map<String,String>> workerMap = new HashMap<String, Map<String,String>>();
   private Map<String,String> jobParams;
 
+  private final String[] HEADERS_TO_TRY = { 
+	  "X-Forwarded-For",
+	  "Proxy-Client-IP",
+	  "WL-Proxy-Client-IP",
+	  "HTTP_X_FORWARDED_FOR",
+	  "HTTP_X_FORWARDED",
+	  "HTTP_X_CLUSTER_CLIENT_IP",
+	  "HTTP_CLIENT_IP",
+	  "HTTP_FORWARDED_FOR",
+	  "HTTP_FORWARDED",
+	  "HTTP_VIA",
+	  "REMOTE_ADDR" 
+  };
+  private String getClientIpAddress(HttpServletRequest request){
+	  for(String header: HEADERS_TO_TRY){
+		  String ip = request.getHeader(header);
+		  if(ip!=null && ip.length()!= 0 && !"unknown".equalsIgnoreCase(ip)){
+			  return ip;
+		  }
+	  }
+	  return request.getRemoteAddr();
+  }
   private boolean isWaiting(Map<String,Map<String,String>> workers){
 	  for(String key: workers.keySet()){
 		  Map<String,String> statusParams = workers.get(key);
@@ -30,10 +52,10 @@ public class MasterServlet extends HttpServlet {
 	  return true;
   }
   private void postToReduce(InetAddress address, String port, Map<String, String> workerParams) throws IOException{
-	  HttpClient client = new HttpClient(address, Integer.valueOf(port), workerParams);
+	  HttpClient client = new HttpClient(address, Integer.valueOf(port), workerParams.get("hostname"));
 	  client.setRequestMethod("post");
 	  try {
-		client.setRequestURL(workerParams.get("name"),"/runreduce");
+		client.setRequestURL(workerParams.get("name"),"runreduce");
 		} catch (Exception e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
@@ -75,11 +97,13 @@ public class MasterServlet extends HttpServlet {
 				  String[] strings = workerKey.split(":");
 				  logger.debug("[debug] worker's IP address is "+strings[0]);
 				  logger.debug("[debug] worker's port number is "+strings[1]);
+				  logger.debug("sending post request to /runmap on this worker...");
 				  InetAddress ipAddress = InetAddress.getByName(strings[0]);
-				  HttpClient client = new HttpClient(ipAddress, Integer.valueOf(strings[1]),paramMap);
+				  String hostname = paramMap.get("hostname");
+				  HttpClient client = new HttpClient(ipAddress, Integer.valueOf(strings[1]),hostname);
 				  client.setRequestMethod("post");
 				  try {
-					  client.setRequestURL(paramMap.get("name"),"/runmap");
+					  client.setRequestURL(paramMap.get("name"),"runmap");
 				  } catch (Exception e) {
 					  // TODO Auto-generated catch block
 					  e.printStackTrace();
@@ -93,11 +117,14 @@ public class MasterServlet extends HttpServlet {
 				  sb.append("numWorkers=").append(workerMap.keySet().size());
 				  int i = 1;
 				  for(String key: workerMap.keySet()){
-					  sb.append("&").append("worker").append(i).append("=").append(key);
+					  Map<String,String> workerParams = workerMap.get(key);
+					  String workerName = workerParams.get("name");
+					  sb.append("&").append(workerName).append("=").append(key);
 					  i++;
 				  }
 				  int length = sb.length();				  
-				  
+				  logger.debug("[debug] the body msg of this /runmap request is:");
+				  logger.debug(sb);
 				  client.setRequestHeader("Content-Length", String.valueOf(length));
 				  client.setRequestBody(sb);
 				  client.requestFlush();
@@ -127,10 +154,13 @@ public class MasterServlet extends HttpServlet {
     logger.debug("[debug] path info: "+pathInfo);
     logger.debug("[debug] context path(webapp): "+ contextPath);
     if(pathInfo.equalsIgnoreCase("/workerstatus")){
-    	IP = request.getRemoteAddr();
+    	IP = getClientIpAddress(request);
+    	//IP = request.getRemoteAddr();
+    	logger.debug("client's ip address is "+ IP);
     	port = request.getParameter("port");
     	comb = IP + ":" + port;
     	hostname = request.getRemoteHost();
+    	logger.debug("client's hostname is: "+ hostname);
     	@SuppressWarnings("unchecked")
 		Map<String,String> paramMap = request.getParameterMap();
     	
@@ -149,6 +179,7 @@ public class MasterServlet extends HttpServlet {
     	if(isWaiting(workerMap) == true){
     		for(String key: workerMap.keySet()){
     			String[] strings = key.split(":");
+    			logger.debug("sending post request to /runreduce on this worker...");
     			postToReduce(InetAddress.getByName(strings[0]),strings[1], workerMap.get(key));
     		}
     	};

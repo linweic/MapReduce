@@ -17,6 +17,8 @@ public class HttpClient {
 	private PrintWriter out;
 	private BufferedReader in;
 	private String method;
+	private String hostname;
+	private int port;
 	private Map<String,String> resHeaderMap;
 	private Map<String,String> paramMap;
 	
@@ -26,13 +28,13 @@ public class HttpClient {
 		out = new PrintWriter(clientSocket.getOutputStream(),false);
 		in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 	}
-	public HttpClient(InetAddress address, int port, Map<String,String>paramMap) throws IOException{
+	public HttpClient(InetAddress address, int port, String name) throws IOException{
 		clientSocket = new Socket(address, port);
 		resHeaderMap = new HashMap<String, String>();
-		this.paramMap = paramMap; 
+		hostname = name;
+		this.port = port;
 		out = new PrintWriter(clientSocket.getOutputStream(),false);
 		in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-		resHeaderMap.put("hostname", paramMap.get("hostname"));
 	}
 	public void setRequestMethod(String m){
 		method = m;
@@ -42,11 +44,11 @@ public class HttpClient {
 		else{
 			StringBuffer sb = new StringBuffer();
 			sb.append(method.toUpperCase()).append(" /").append(worker).append("/").append(url).append(" HTTP/1.1");
-			System.out.println("[debug]first request line: "+sb);
+			logger.debug("[debug]first request line: "+sb);
 			out.println(sb);
-			sb = new StringBuffer("Host:");
-			sb.append(resHeaderMap.get("hostname"));
-			System.out.println("[debug]host header info => "+ sb);
+			sb = new StringBuffer("Host: ");
+			sb.append(hostname).append(":").append(port);
+			logger.debug("[debug]host header info => "+ sb);
 			out.println(sb);
 		}
 	}

@@ -11,18 +11,18 @@ import org.apache.log4j.Logger;
 import edu.upenn.cis455.mapreduce.Context;
 import edu.upenn.cis455.mapreduce.Job;
 
-public class WorkerThread implements Runnable{
-	static final Logger logger = Logger.getLogger(WorkerThread.class);
+public class MapThread implements Runnable{
+	static final Logger logger = Logger.getLogger(MapThread.class);
 	private final BlockingQueue<String> queue;
 	private Job job;
 	private Context context;
 	
-	public WorkerThread(BlockingQueue<String> queue, Job jobInstance, Context contextInstance){
+	public MapThread(BlockingQueue<String> queue, Job jobInstance, Context contextInstance){
 		this.queue = queue;
 		job = jobInstance;
 		context = contextInstance;
 	}
-	public WorkerThread(BlockingQueue<String> queue){
+	public MapThread(BlockingQueue<String> queue){
 		this.queue = queue;
 	}
 	@Override
@@ -35,8 +35,9 @@ public class WorkerThread implements Runnable{
 				String[] strings = line.split("\\t");
 				//logger.debug("----------");
 				logger.debug(Thread.currentThread().getName()+":"+strings[0]+"\t"+strings[1]);
-				//job.map(strings[0], strings[1], context);
-				
+				WorkerServlet.keysRead++;
+				job.map(strings[0], strings[1], context);
+				/*
 				MessageDigest md = MessageDigest.getInstance("SHA-1");
 				md.reset();
 				md.update(strings[0].getBytes("UTF-8"));
@@ -56,16 +57,11 @@ public class WorkerThread implements Runnable{
 				BigInteger b = BigInteger.valueOf(9);
 				BigInteger divide = b.divide(a);
 				System.out.println(Integer.valueOf(divide.toString()));
+				*/
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				//e.printStackTrace();
 				logger.debug(Thread.currentThread().getName()+": interrupted unexpectedly.");
-			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 		}
 	}

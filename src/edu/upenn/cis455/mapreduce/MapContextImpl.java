@@ -12,14 +12,17 @@ import java.security.NoSuchAlgorithmException;
 
 import org.apache.log4j.Logger;
 
+import edu.upenn.cis455.mapreduce.worker.WorkerServlet;
+
 public class MapContextImpl implements Context{
 	static final Logger logger = Logger.getLogger(MapContextImpl.class);
-	private File spoolOut;
+	//private File spoolOut;
 	private File[] files;
-	
+	/*
 	public MapContextImpl(File name){
 		spoolOut = name;
 	}
+	*/
 	public MapContextImpl(File[] spoolOutFiles){
 		files = spoolOutFiles;
 	}
@@ -61,6 +64,7 @@ public class MapContextImpl implements Context{
 			StringBuffer line = new StringBuffer(key);
 			line.append("\t").append(value);
 			writeToFile(files[index], line);
+			WorkerServlet.keysWritten++;
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
