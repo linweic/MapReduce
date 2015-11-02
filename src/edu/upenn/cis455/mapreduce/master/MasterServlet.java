@@ -55,7 +55,7 @@ public class MasterServlet extends HttpServlet {
 	  HttpClient client = new HttpClient(address, Integer.valueOf(port), workerParams.get("hostname"));
 	  client.setRequestMethod("post");
 	  try {
-		client.setRequestURL(workerParams.get("name"),"runreduce");
+		client.setRequestURL("worker","runreduce");
 		} catch (Exception e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
@@ -103,7 +103,7 @@ public class MasterServlet extends HttpServlet {
 				  HttpClient client = new HttpClient(ipAddress, Integer.valueOf(strings[1]),hostname);
 				  client.setRequestMethod("post");
 				  try {
-					  client.setRequestURL(paramMap.get("name"),"runmap");
+					  client.setRequestURL("worker","runmap");
 				  } catch (Exception e) {
 					  // TODO Auto-generated catch block
 					  e.printStackTrace();
@@ -117,9 +117,9 @@ public class MasterServlet extends HttpServlet {
 				  sb.append("numWorkers=").append(workerMap.keySet().size());
 				  int i = 1;
 				  for(String key: workerMap.keySet()){
-					  Map<String,String> workerParams = workerMap.get(key);
-					  String workerName = workerParams.get("name");
-					  sb.append("&").append(workerName).append("=").append(key);
+					  //Map<String,String> workerParams = workerMap.get(key);
+					  //String workerName = workerParams.get("name");
+					  sb.append("&").append("worker").append(i).append("=").append(key);
 					  i++;
 				  }
 				  int length = sb.length();				  

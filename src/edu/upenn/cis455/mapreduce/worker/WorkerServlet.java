@@ -5,6 +5,8 @@ import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -28,8 +30,9 @@ public class WorkerServlet extends HttpServlet {
   static final long serialVersionUID = 455555002;
   static final Logger logger = Logger.getLogger(WorkerServlet.class);
   public static String status;
-  public static int keysRead=0;
-  public static int keysWritten = 0;
+  public static int keysRead;
+  public static int keysWritten;
+  public static String jobName;
   
   public synchronized void readFileToMemo(BlockingQueue<String> queue, BufferedReader br) throws IOException, InterruptedException{
 		String line;
@@ -99,12 +102,13 @@ public class WorkerServlet extends HttpServlet {
 	  }
 	  return files;
   }
-  private void reportStatus(String masterParam, String job) throws Exception{
+  private void reportStatus() throws Exception{
 	  logger.debug("reporting status to master");
+	  String masterParam = getServletConfig().getInitParameter("master");
 	  String workerPort = getServletConfig().getInitParameter("port");
 	  String storageDir = getServletConfig().getInitParameter("storagedir");
-	  String workerName = getServletConfig().getInitParameter("workername");
-	  logger.debug("workername is "+ workerName);
+	  //String workerName = getServletConfig().getInitParameter("workername");
+	  //logger.debug("workername is "+ workerName);
 	  String[] values = masterParam.trim().split(":");
 	  InetAddress masterIP = InetAddress.getByName(values[0]);
 	  String hostname = masterIP.getHostName();
@@ -113,15 +117,15 @@ public class WorkerServlet extends HttpServlet {
 	  StringBuffer queryString = new StringBuffer("?");
 	  queryString.append("status=").append(status).append("&");
 	  queryString.append("port=").append(workerPort).append("&");
-	  queryString.append("job=").append(job).append("&");
+	  queryString.append("job=").append(jobName).append("&");
 	  queryString.append("keysRead=").append(keysRead).append("&");
 	  queryString.append("keysWritten=").append(keysWritten).append("&");
-	  queryString.append("name=").append(workerName);
+	  //queryString.append("name=").append(workerName);
 	  StringBuffer url = new StringBuffer("workerstatus");
 	  url.append(queryString);
 	  logger.debug("path info of this request is:");
 	  logger.debug(url);
-	  statusClient.setRequestURL(workerName, url.toString());
+	  statusClient.setRequestURL("master", url.toString());
 	  statusClient.requestFlush();
 	  BufferedReader br = statusClient.getInputStreamReader();
 	  logger.debug("[debug]first line response from /workerstatus: "+ br.readLine());
@@ -146,6 +150,27 @@ public class WorkerServlet extends HttpServlet {
 		  e.printStackTrace();
 	  }
   }
+  private class StatusTask extends TimerTask{
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		try {
+			reportStatus();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	  
+  }
+  public void init(){
+	  status = "idle";
+	  keysRead = 0;
+	  keysWritten = 0;
+	  jobName = "unknown";
+	  Timer timer = new Timer();
+	  timer.schedule(new StatusTask(), 0, 30000);
+  }
   public void doPost(HttpServletRequest request, HttpServletResponse response) throws java.io.IOException{
 	  String masterComb = getServletConfig().getInitParameter("master");
 	  String storageDir = getServletConfig().getInitParameter("storagedir");
@@ -165,6 +190,7 @@ public class WorkerServlet extends HttpServlet {
 		  keysWritten = 0;
 		  status = "mapping";
 		  String jobName = request.getParameter("job");
+		  WorkerServlet.jobName = jobName;
 		  String input = request.getParameter("input");
 		  String num = request.getParameter("numThreads");
 		  String stringNumWorkers = request.getParameter("numWorkers");
@@ -222,7 +248,7 @@ public class WorkerServlet extends HttpServlet {
 			  HttpClient client = new HttpClient(ip, Integer.valueOf(values[1]),hostname);
 			  client.setRequestMethod("POST");
 			  try {
-				client.setRequestURL(workerName.toString(), "pushdata");
+				client.setRequestURL("worker", "pushdata");
 			  } catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -251,7 +277,7 @@ public class WorkerServlet extends HttpServlet {
 		  logger.debug("worker status changes to waiting");
 		  status = "waiting";
 		  try {
-			reportStatus(masterComb,jobName);
+			reportStatus();
 		  } catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -279,6 +305,7 @@ public class WorkerServlet extends HttpServlet {
 		  keysWritten = 0;
 		  status = "reducing";
 		  String jobName = request.getParameter("job");
+		  WorkerServlet.jobName = jobName;
 		  String output = request.getParameter("output");
 		  String num = request.getParameter("numThreads");
 		  int numThreads = Integer.valueOf(num);
@@ -319,7 +346,7 @@ public class WorkerServlet extends HttpServlet {
 		  logger.debug("reducing finished");
 		  status = "idle";
 		  try {
-			reportStatus(masterComb, jobName);
+			reportStatus();
 		  } catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -330,6 +357,7 @@ public class WorkerServlet extends HttpServlet {
   public void doGet(HttpServletRequest request, HttpServletResponse response) 
        throws java.io.IOException
   {
+	  /*
 	  String masterComb = getServletConfig().getInitParameter("master");
 	  logger.debug("-----worker debug section-----");
 	  logger.debug("[debug]ip:port of this master is =>"+masterComb);
@@ -339,7 +367,7 @@ public class WorkerServlet extends HttpServlet {
 	  
 	  String workerPort = getServletConfig().getInitParameter("port");
 	  String storageDir = getServletConfig().getInitParameter("storagedir");
-	  
+	  */
   }
 }
   
