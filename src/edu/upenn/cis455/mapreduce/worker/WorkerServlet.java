@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -38,7 +39,7 @@ public class WorkerServlet extends HttpServlet {
 		String line;
 		while((line = br.readLine())!=null){
 			queue.put(line);
-			logger.debug(Thread.currentThread().getName()+" [FileTask]"+line+" added to the queue");
+			System.out.println(Thread.currentThread().getName()+" [FileTask]"+line+" added to the queue");
 		}
   }
   
@@ -56,7 +57,7 @@ public class WorkerServlet extends HttpServlet {
   }
   private File makeOutputDir(String storageDir,String dirName) throws IOException{
 	  String dirPath = storageDir.concat(dirName);
-	  logger.debug(dirName+"'s file path is "+ dirPath);
+	  System.out.println(dirName+"'s file path is "+ dirPath);
 	  File outDir = new File(dirPath);
 	  if(outDir.exists()) deleteDir(outDir);
 	  outDir.mkdir();
@@ -64,16 +65,16 @@ public class WorkerServlet extends HttpServlet {
   }
   private void makeSpoolInDir(String storageDir){
 	  String spoolIn = storageDir.concat("spool-in");
-	  logger.debug("spool-in file path is "+ spoolIn);
+	  System.out.println("spool-in file path is "+ spoolIn);
 	  File inDir = new File(spoolIn);
 	  if(inDir.exists()) deleteDir(inDir);
 	  inDir.mkdir();
-	  logger.debug("spool-in directory has been created.");
+	  System.out.println("spool-in directory has been created.");
 	  String filePath = spoolIn.concat("/intermediate");
 	  File f = new File(filePath);
 	  try {
 		f.createNewFile();
-		logger.debug("intermediate file in spool-in has been created.");
+		System.out.println("intermediate file in spool-in has been created.");
 	  } catch (IOException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
@@ -81,8 +82,8 @@ public class WorkerServlet extends HttpServlet {
   }
   private File makeFile(String storageDir, String parentDir, String filename){
 	  StringBuffer sb = new StringBuffer(storageDir);
-	  sb.append(parentDir).append(parentDir).append("/").append(filename);
-	  logger.debug(filename+" path is: "+ sb);
+	  sb.append(parentDir).append("/").append(filename);
+	  System.out.println(filename+" path is: "+ sb);
 	  File file = new File(sb.toString());
 	  try {
 		file.createNewFile();
@@ -103,15 +104,15 @@ public class WorkerServlet extends HttpServlet {
 	  return files;
   }
   private void reportStatus() throws Exception{
-	  logger.debug("reporting status to master");
+	  System.out.println("reporting status to master");
 	  String masterParam = getServletConfig().getInitParameter("master");
 	  String workerPort = getServletConfig().getInitParameter("port");
 	  String storageDir = getServletConfig().getInitParameter("storagedir");
-	  //String workerName = getServletConfig().getInitParameter("workername");
-	  //logger.debug("workername is "+ workerName);
 	  String[] values = masterParam.trim().split(":");
+	  //System.out.println("master ip address is: "+values[0]);
 	  InetAddress masterIP = InetAddress.getByName(values[0]);
 	  String hostname = masterIP.getHostName();
+	  //System.out.println("master hostname is: "+hostname);
 	  HttpClient statusClient = new HttpClient(masterIP,Integer.valueOf(values[1]),hostname);
 	  statusClient.setRequestMethod("GET");
 	  StringBuffer queryString = new StringBuffer("?");
@@ -119,18 +120,18 @@ public class WorkerServlet extends HttpServlet {
 	  queryString.append("port=").append(workerPort).append("&");
 	  queryString.append("job=").append(jobName).append("&");
 	  queryString.append("keysRead=").append(keysRead).append("&");
-	  queryString.append("keysWritten=").append(keysWritten).append("&");
-	  //queryString.append("name=").append(workerName);
+	  queryString.append("keysWritten=").append(keysWritten);
 	  StringBuffer url = new StringBuffer("workerstatus");
 	  url.append(queryString);
-	  logger.debug("path info of this request is:");
-	  logger.debug(url);
+	  //System.out.println("path info of this request is:");
+	  //System.out.println(url);
 	  statusClient.setRequestURL("master", url.toString());
+	  //statusClient.sendNewLine();
 	  statusClient.requestFlush();
 	  BufferedReader br = statusClient.getInputStreamReader();
-	  logger.debug("[debug]first line response from /workerstatus: "+ br.readLine());
+	  //System.out.println("[debug]first line response from /workerstatus: "+ br.readLine());
 	  statusClient.closeClient();		  
-	  logger.debug("---worker status submitted successfully");
+	  System.out.println("---worker status submitted successfully");
   }
   private void sortFile(File workDir){
 	  try {
@@ -140,11 +141,11 @@ public class WorkerServlet extends HttpServlet {
 		  process = pb.start();
 		  BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
 		  String line;
-		  logger.debug("---sorted intermediate file---");
+		  System.out.println("---sorted intermediate file---");
 		  while((line = br.readLine())!= null){
-			  logger.debug(line);
+			  System.out.println(line);
 		  }
-		  logger.debug("----------");
+		  System.out.println("----------");
 	  } catch (IOException e) {
 		  // TODO Auto-generated catch block
 		  e.printStackTrace();
@@ -164,6 +165,7 @@ public class WorkerServlet extends HttpServlet {
 	  
   }
   public void init(){
+	  System.out.println("initing worker servlet");
 	  status = "idle";
 	  keysRead = 0;
 	  keysWritten = 0;
@@ -174,35 +176,43 @@ public class WorkerServlet extends HttpServlet {
   public void doPost(HttpServletRequest request, HttpServletResponse response) throws java.io.IOException{
 	  String masterComb = getServletConfig().getInitParameter("master");
 	  String storageDir = getServletConfig().getInitParameter("storagedir");
-	  logger.debug("-----worker debug section-----");
-	  logger.debug("[debug]ip:port of this master is =>"+masterComb);
-	  logger.debug("[debug]storage dir is => "+storageDir);
+	  //System.out.println("-----worker debug section-----");
+	  //System.out.println("[debug]ip:port of this master is =>"+masterComb);
+	  //System.out.println("[debug]storage dir is => "+storageDir);
 	  
 	  String pathInfo = request.getPathInfo();
 	  String remoteAddr = request.getRemoteAddr();
 	  int remotePort = request.getRemotePort();
 	  String remoteComb = remoteAddr.concat(":").concat(String.valueOf(remotePort));
-	  logger.debug("[debug] remote ip:port is=>"+remoteComb);
-	  logger.debug("[debug] worker path info: "+ pathInfo);
-	  if(pathInfo.equalsIgnoreCase("/runmap")){
-		  logger.debug("worker receives post request from master, worker starts doing mapping...");
+	  //System.out.println("[debug] remote ip:port is=>"+remoteComb);
+	  System.out.println("[debug] worker path info: "+ pathInfo);
+	  if(pathInfo.equalsIgnoreCase("/worker/runmap")){
+		  System.out.println("worker receives post request from master, worker starts doing mapping...");
 		  keysRead = 0;
 		  keysWritten = 0;
 		  status = "mapping";
-		  String jobName = request.getParameter("job");
-		  WorkerServlet.jobName = jobName;
-		  String input = request.getParameter("input");
-		  String num = request.getParameter("numThreads");
-		  String stringNumWorkers = request.getParameter("numWorkers");
+		  @SuppressWarnings("unchecked")
+		  Map<String,String[]> jobParams = request.getParameterMap();
+		  System.out.println(jobParams.keySet());
+		  for(String s: jobParams.keySet()) {
+			  System.out.println(s+"\t"+jobParams.get(s)[0]);
+			  if(s.contains("job")) jobName = jobParams.get(s)[0];
+		  }
+		  //String job = jobParams.get("\r\njob")[0];
+		  System.out.println("job name is: "+ jobName);
+		  String input = jobParams.get("input")[0];
+		  System.out.println("input path is: "+ input);
+		  String num = jobParams.get("numThreads")[0];
+		  String stringNumWorkers = jobParams.get("numWorkers")[0];
 		  int numThreads = Integer.valueOf(num);
 		  int numWorkers = Integer.valueOf(stringNumWorkers);
 			 
 		  File spoolOutDir = makeOutputDir(storageDir,"spool-out");
-		  logger.info("spoolout created");
+		  System.out.println("spoolout created");
 		  File[] spoolOutFiles = createWorkerFiles(storageDir, numWorkers);
-		  logger.info("files for every worker in spoolout created");
+		  System.out.println("files for every worker in spoolout created");
 		  makeSpoolInDir(storageDir);
-		  Job jobInstance = null;		  
+		  Job jobInstance = null;
 		  try {
 			  Class<?> jobClass = Class.forName(jobName);
 			  jobInstance = (Job)jobClass.newInstance();
@@ -211,7 +221,7 @@ public class WorkerServlet extends HttpServlet {
 			  e.printStackTrace();
 		  }
 		  Context contextInstance = new MapContextImpl(spoolOutFiles);
-		  logger.info("map context instance created");
+		  System.out.println("map context instance created");
 			  
 		  BlockingQueue<String> queue = new ArrayBlockingQueue<String>(200);
 		  ExecutorService service = Executors.newFixedThreadPool(Integer.valueOf(numThreads));
@@ -219,11 +229,11 @@ public class WorkerServlet extends HttpServlet {
 			  service.submit(new MapThread(queue, jobInstance, contextInstance));
 		  }
 		  String inputDir = storageDir.concat(input);
-		  logger.debug("[debug] input directory full path is"+inputDir);
+		  System.out.println("[debug] input directory full path is"+inputDir);
 		  File folder = new File(inputDir);
 		  File[] files = folder.listFiles();
 		  int length = files.length;
-		  logger.debug("reading files from disks to memory");
+		  System.out.println("reading files from disks to memory");
 		  for(int j = 0; j<length;j++){
 			  BufferedReader br = new BufferedReader(new FileReader(files[j]));
 			  try {
@@ -234,17 +244,24 @@ public class WorkerServlet extends HttpServlet {
 			  }
 		  }
 		  service.shutdown();
-		  logger.debug("all threads have finished hashing and writing to spool-out files.");
-		  logger.debug("[keysRead] "+keysRead+" keys have been read by last map");
-		  logger.debug("[keysWritten] "+ keysWritten+" keys have been written by last map");
-		  logger.debug("now posting contents of files to /pushdata of other workers");
+		  System.out.println("all threads have finished hashing and writing to spool-out files.");
+		  System.out.println("[keysRead] "+keysRead+" keys have been read by last map");
+		  System.out.println("[keysWritten] "+ keysWritten+" keys have been written by last map");
+		  System.out.println("now posting contents of files to /pushdata of other workers");
 		  for(int i = 0; i< numWorkers; i++){
 			  StringBuffer workerName = new StringBuffer("worker");
+			  for(String s: jobParams.keySet()){
+				  System.out.println(s+"\t"+jobParams.get(s)[0]);
+			  }
 			  workerName.append(i+1);
-			  String IPAndPort = request.getParameter(workerName.toString());
+			  String IPAndPort = jobParams.get(workerName.toString())[0];
+			  if(i == numWorkers-1){
+				  IPAndPort = IPAndPort+String.valueOf(i);
+			  }
 			  String[] values = IPAndPort.trim().split(":");
 			  InetAddress ip = InetAddress.getByName(values[0]);
 			  String hostname = ip.getHostName();
+			  System.out.println("IP:port is "+IPAndPort+", hostname: "+ hostname);
 			  HttpClient client = new HttpClient(ip, Integer.valueOf(values[1]),hostname);
 			  client.setRequestMethod("POST");
 			  try {
@@ -255,7 +272,7 @@ public class WorkerServlet extends HttpServlet {
 			  }
 			  StringBuffer filePath = new StringBuffer(storageDir);
 			  filePath.append("spool-out/").append(workerName);
-			  logger.debug("file path of "+workerName+"is: "+filePath);
+			  System.out.println("file path of "+workerName+"is: "+filePath);
 			  File mapFile = new File(filePath.toString());
 			  BufferedReader mapFileReader = new BufferedReader(new FileReader(mapFile));
 			  String line;
@@ -268,13 +285,15 @@ public class WorkerServlet extends HttpServlet {
 			  client.setRequestHeader("Content-Type","text/plain");
 			  client.setRequestHeader("Content-Length", String.valueOf(bodyLength));
 			  client.setRequestBody(body);
+			  System.out.println("body message in pushdata request:");
+			  System.out.println(body);
 			  client.requestFlush();
 			  BufferedReader br = client.getInputStreamReader();
-			  logger.debug("[debug]first line response from /pushdata: "+ br.readLine());
+			  System.out.println("[debug]first line response from /pushdata: "+ br.readLine());
 			  client.closeClient();			  
 		  }
-		  logger.debug("-------map results posted to /pushdata------");
-		  logger.debug("worker status changes to waiting");
+		  System.out.println("-------map results posted to /pushdata------");
+		  System.out.println("worker status changes to waiting");
 		  status = "waiting";
 		  try {
 			reportStatus();
@@ -282,34 +301,42 @@ public class WorkerServlet extends HttpServlet {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		  }
-		  logger.debug("status updated...waiting");
+		  System.out.println("status updated...waiting");
 	  }
-	  else if(pathInfo.equalsIgnoreCase("/pushdata")){
-		  logger.debug("receieves post request from peer workers");
-		  logger.debug("start writing body messages into spool-in directory...");
+	  else if(pathInfo.equalsIgnoreCase("/worker/pushdata")){
+		  System.out.println("receieves post request from peer workers");
+		  System.out.println("start writing body messages into spool-in directory...");
 		  BufferedReader contentReader = request.getReader();
 		  File intermediate = new File(storageDir+"spool-in/intermediate");
 		  PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(intermediate,true)));
 		  String line;
-		  logger.debug("-----content data-----");
+		  System.out.println("-----content data-----");
+		  contentReader.readLine();
 		  while((line = contentReader.readLine())!=null){
-			  logger.debug(line);
+			  System.out.println(line);
 			  pw.println(line);
 		  }
-		  logger.debug("-----data in content have been written to spool-in file");
+		  System.out.println("-----data in content have been written to spool-in file");
 		  pw.close();
 	  }
-	  else if(pathInfo.equalsIgnoreCase("/runreduce")){
-		  logger.debug("worker starts doing reducing...");
+	  else if(pathInfo.equalsIgnoreCase("/worker/runreduce")){
+		  System.out.println("worker starts doing reducing...");
 		  keysRead = 0;
 		  keysWritten = 0;
 		  status = "reducing";
-		  String jobName = request.getParameter("job");
-		  WorkerServlet.jobName = jobName;
+		  //String jobName = request.getParameter("job");
+		  @SuppressWarnings("unchecked")
+		  Map<String,String[]>jobParams = request.getParameterMap();
+		  for(String s: jobParams.keySet()){
+			  System.out.println(s+"\t"+jobParams.get(s)[0]);
+			  if(s.contains("job")) jobName = jobParams.get(s)[0];
+		  }
+		  //WorkerServlet.jobName = jobName;
 		  String output = request.getParameter("output");
 		  String num = request.getParameter("numThreads");
 		  int numThreads = Integer.valueOf(num);
-		  Job jobInstance = null;		  
+		  //int numThreads = 3;
+		  Job jobInstance = null;
 		  try {
 			  Class<?> jobClass = Class.forName(jobName);
 			  jobInstance = (Job)jobClass.newInstance();
@@ -319,22 +346,22 @@ public class WorkerServlet extends HttpServlet {
 		  }
 		  //File outputDir = new File(output);
 		  makeOutputDir(storageDir,output);
-		  logger.debug("output directory is created.");
+		  System.out.println("output directory is created.");
 		  File outputData = makeFile(storageDir, output, "outputdata");
-		  logger.debug("outputdata file is created.");
+		  System.out.println("outputdata file is created.");
 		  File spoolIn = new File(storageDir+"spool-in");
 		  File intermediate = new File(storageDir+"spool-in/intermediate");
-		  logger.debug("start sorting the intermediate file");
+		  System.out.println("start sorting the intermediate file");
 		  sortFile(spoolIn);
 		  Context contextInstance = new ReduceContextImpl(outputData);
-		  logger.info("reduce context instance created");
+		  System.out.println("reduce context instance created");
 		  
 		  BlockingQueue<String> queue = new ArrayBlockingQueue<String>(200);
 		  ExecutorService service = Executors.newFixedThreadPool(Integer.valueOf(numThreads));
 		  for(int i = 0; i<numThreads; i++){
 			  service.submit(new ReduceThread(queue, jobInstance, contextInstance));
 		  }
-		  logger.debug("reading files from disks to memory");
+		  System.out.println("reading files from disks to memory");
 		  BufferedReader br = new BufferedReader(new FileReader(intermediate));
 		  try {
 			  readFileToMemo(queue,br);
@@ -343,7 +370,7 @@ public class WorkerServlet extends HttpServlet {
 			  e.printStackTrace();
 		  }
 		  service.shutdown();
-		  logger.debug("reducing finished");
+		  System.out.println("reducing finished");
 		  status = "idle";
 		  try {
 			reportStatus();
@@ -351,7 +378,7 @@ public class WorkerServlet extends HttpServlet {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		  }
-		  logger.debug("status updated...idle");
+		  System.out.println("status updated...idle");
 	  }
   }
   public void doGet(HttpServletRequest request, HttpServletResponse response) 
@@ -359,8 +386,8 @@ public class WorkerServlet extends HttpServlet {
   {
 	  /*
 	  String masterComb = getServletConfig().getInitParameter("master");
-	  logger.debug("-----worker debug section-----");
-	  logger.debug("[debug]ip:port of this master is =>"+masterComb);
+	  System.out.println("-----worker debug section-----");
+	  System.out.println("[debug]ip:port of this master is =>"+masterComb);
 	  String[] strings = masterComb.split(":");
 	  String masterIP = strings[0];
 	  String masterPort = strings[1];

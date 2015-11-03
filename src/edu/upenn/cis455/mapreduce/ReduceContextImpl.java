@@ -17,9 +17,11 @@ public class ReduceContextImpl implements Context{
 		outputFile = file;
 	}
 	private synchronized void writeToFile(File file, StringBuffer sb) throws IOException{
-		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file,true)));
-		pw.println(sb.toString());
-		pw.close();
+		synchronized(file){
+			PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file,true)));
+			pw.println(sb.toString());
+			pw.close();
+		}
 	}
 	@Override
 	public void write(String key, String value) {
