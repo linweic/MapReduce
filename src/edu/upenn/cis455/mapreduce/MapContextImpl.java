@@ -40,15 +40,16 @@ public class MapContextImpl implements Context{
 			sb.append(String.format("%02X",b));
 		}
 		int numWorkers = files.length;
+		System.out.println("[mapContextImpl] num of workers to hash "+ numWorkers);
 		BigInteger tmp = BigInteger.ZERO.setBit(160);				
 		BigInteger max = tmp.subtract(BigInteger.ONE);
 		BigInteger interval = max.divide(BigInteger.valueOf(numWorkers));
 		BigInteger hashcode = new BigInteger(digest);
 		BigInteger index = hashcode.divide(interval);
 		//System.out.println(max.toString());
-		logger.debug(key+"'s hashcode is "+sb);
+		System.out.println(key+"'s hashcode is "+sb);
 		int i = Integer.valueOf(index.toString());
-		logger.debug("the key should be hashed to file["+i+"]");
+		System.out.println("the key should be hashed to file["+i+"]");
 		return i;
 	}
 	private synchronized void writeToFile(File file, StringBuffer sb) throws IOException{

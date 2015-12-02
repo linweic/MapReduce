@@ -68,7 +68,7 @@ public class MasterServlet extends HttpServlet {
 	  sb.append("job=").append(jobParams.get("job")[0]).append("&");
 	  sb.append("output=").append(jobParams.get("outputDirectory")[0]).append("&");
 	  sb.append("numThreads=").append(jobParams.get("reduceThreadsNumber")[0]).append("&");
-	  sb.append("zz=zz");
+	  //sb.append("zz=zz");
 	  int length = sb.length();
 	  
 	  System.out.println("/runreduce msg body: "+ sb);
@@ -128,7 +128,8 @@ public class MasterServlet extends HttpServlet {
 					  sb.append("&").append("worker").append(i).append("=").append(key);
 					  i++;
 				  }
-				  sb.append("zz=zz");
+				  sb.append("&");
+				  //sb.append("zz=zz");
 				  int length = sb.length();				  
 				  System.out.println("[debug] the body msg of this /runmap request is:");
 				  System.out.println(sb);
@@ -137,17 +138,20 @@ public class MasterServlet extends HttpServlet {
 				  client.setRequestBody(sb);
 				  //client.sendNewLine();
 				  client.requestFlush();
-				  BufferedReader br = client.getInputStreamReader();
-				  //System.out.println("[debug]first line response from /runmap: "+ br.readLine());
+				  //BufferedReader br = client.getInputStreamReader();
+				  //System.out.println("[debug]first line response from /runmap of "+workerKey+": "+ br.readLine());
+				  /*
 				  String s;
 				  while((s = br.readLine())!=null){
 					  System.out.println(s);
 				  }
+				  */
 				  client.closeClient();
 			  }
 		  }
 		  PrintWriter out = response.getWriter();
 		  out.println("job submitted.");
+		  out.close();
 	  }
   }
 
@@ -167,6 +171,7 @@ public class MasterServlet extends HttpServlet {
     System.out.println("[debug] path info: "+pathInfo);
     System.out.println("[debug] context path(webapp): "+ contextPath);
     if(pathInfo.equalsIgnoreCase("/workerstatus")){
+    	System.out.println("Received a workerstatus request.");
     	IP = getClientIpAddress(request);
     	//IP = request.getRemoteAddr();
     	System.out.println("client's ip address is "+ IP);
@@ -193,7 +198,7 @@ public class MasterServlet extends HttpServlet {
     	if(isWaiting(workerMap) == true){
     		for(String key: workerMap.keySet()){
     			String[] strings = key.split(":");
-    			System.out.println("sending post request to /runreduce on this worker...");
+    			System.out.println("sending post request to /runreduce on this worker..."+key);
     			System.out.println(strings[1]);
     			postToReduce(InetAddress.getByName(strings[0]),strings[1], workerMap.get(key));
     		}

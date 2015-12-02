@@ -67,7 +67,10 @@ public class WorkerServlet extends HttpServlet {
 	  String spoolIn = storageDir.concat("spool-in");
 	  System.out.println("spool-in file path is "+ spoolIn);
 	  File inDir = new File(spoolIn);
-	  if(inDir.exists()) deleteDir(inDir);
+	  if(inDir.exists()){
+		  deleteDir(inDir);
+		  System.out.println("deleted previous spool-in directory");
+	  }
 	  inDir.mkdir();
 	  System.out.println("spool-in directory has been created.");
 	  String filePath = spoolIn.concat("/intermediate");
@@ -126,7 +129,7 @@ public class WorkerServlet extends HttpServlet {
 	  //System.out.println("path info of this request is:");
 	  //System.out.println(url);
 	  statusClient.setRequestURL("master", url.toString());
-	  //statusClient.sendNewLine();
+	  statusClient.sendNewLine();
 	  statusClient.requestFlush();
 	  BufferedReader br = statusClient.getInputStreamReader();
 	  //System.out.println("[debug]first line response from /workerstatus: "+ br.readLine());
@@ -172,6 +175,8 @@ public class WorkerServlet extends HttpServlet {
 	  jobName = "unknown";
 	  Timer timer = new Timer();
 	  timer.schedule(new StatusTask(), 0, 30000);
+	  String storageDir = getServletConfig().getInitParameter("storagedir");
+	  makeSpoolInDir(storageDir);
   }
   public void doPost(HttpServletRequest request, HttpServletResponse response) throws java.io.IOException{
 	  String masterComb = getServletConfig().getInitParameter("master");
@@ -206,12 +211,11 @@ public class WorkerServlet extends HttpServlet {
 		  String stringNumWorkers = jobParams.get("numWorkers")[0];
 		  int numThreads = Integer.valueOf(num);
 		  int numWorkers = Integer.valueOf(stringNumWorkers);
-			 
+		  System.out.println("number of workers is"+ numWorkers); 
 		  File spoolOutDir = makeOutputDir(storageDir,"spool-out");
 		  System.out.println("spoolout created");
 		  File[] spoolOutFiles = createWorkerFiles(storageDir, numWorkers);
 		  System.out.println("files for every worker in spoolout created");
-		  makeSpoolInDir(storageDir);
 		  Job jobInstance = null;
 		  try {
 			  Class<?> jobClass = Class.forName(jobName);
@@ -244,6 +248,12 @@ public class WorkerServlet extends HttpServlet {
 			  }
 		  }
 		  service.shutdown();
+		  try {
+			service.awaitTermination(5, TimeUnit.SECONDS);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		  System.out.println("all threads have finished hashing and writing to spool-out files.");
 		  System.out.println("[keysRead] "+keysRead+" keys have been read by last map");
 		  System.out.println("[keysWritten] "+ keysWritten+" keys have been written by last map");
@@ -255,9 +265,11 @@ public class WorkerServlet extends HttpServlet {
 			  }
 			  workerName.append(i+1);
 			  String IPAndPort = jobParams.get(workerName.toString())[0];
+			  /*
 			  if(i == numWorkers-1){
 				  IPAndPort = IPAndPort+String.valueOf(i);
 			  }
+			  */
 			  String[] values = IPAndPort.trim().split(":");
 			  InetAddress ip = InetAddress.getByName(values[0]);
 			  String hostname = ip.getHostName();
@@ -334,6 +346,7 @@ public class WorkerServlet extends HttpServlet {
 		  //WorkerServlet.jobName = jobName;
 		  String output = request.getParameter("output");
 		  String num = request.getParameter("numThreads");
+		  System.out.println("[debug]"+ num);
 		  int numThreads = Integer.valueOf(num);
 		  //int numThreads = 3;
 		  Job jobInstance = null;
@@ -370,6 +383,12 @@ public class WorkerServlet extends HttpServlet {
 			  e.printStackTrace();
 		  }
 		  service.shutdown();
+		  try {
+			service.awaitTermination(5, TimeUnit.SECONDS);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		  System.out.println("reducing finished");
 		  status = "idle";
 		  try {

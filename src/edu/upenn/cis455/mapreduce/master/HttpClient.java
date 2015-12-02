@@ -67,14 +67,14 @@ public class HttpClient {
 	}
 	public void setRequestBody(StringBuffer sb){
 		out.println("\r\n");
-		out.println(sb);
+		out.print(sb);
 	}
 	public void sendNewLine(){
 		out.println("\r\n");
 	}
 	public void requestFlush(){
 		System.out.println("start flushing...");
-		out.println("\r\n");
+		//out.println("\r\n");
 		out.flush();
 	}
 	public BufferedReader getInputStreamReader(){

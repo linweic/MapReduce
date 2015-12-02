@@ -34,7 +34,7 @@ public class MapThread implements Runnable{
 				line = queue.take();
 				String[] strings = line.split("\\t");
 				//logger.debug("----------");
-				logger.debug(Thread.currentThread().getName()+":"+strings[0]+"\t"+strings[1]);
+				System.out.println("[mapthread] "+Thread.currentThread().getName()+":"+strings[0]+"\t"+strings[1]);
 				WorkerServlet.keysRead++;
 				job.map(strings[0], strings[1], context);
 				/*

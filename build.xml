@@ -6,14 +6,14 @@
 	</target>
 	
 	<target name="compile-jobs" depends="init">
-		<javac srcdir="src" destdir="classes" includes="**/job/*.java,**/Job.java,**/Context.java" deprecation="on" 
+		<javac srcdir="src" destdir="classes" includes="**/job/*.java,**/Job.java,**/Context.java,**/mapreduce/*.java" deprecation="on" 
 		 debug="true" includeantruntime="false" classpath="classes">
 			<compilerarg value="-Xlint"/>
 		</javac>
 	</target>
 	
 	<target name="compile-master" depends="init">
-		<javac srcdir="src" destdir="target/master/WEB-INF/classes" includes="**/worker/*.java" deprecation="on" 
+		<javac srcdir="src" destdir="target/master/WEB-INF/classes" includes="**/worker/*.java,**/master/*.java" deprecation="on" 
 		 debug="true" includeantruntime="false" classpath="lib/servlet-api.jar;lib/log4j-1.2.9.jar">
 			<compilerarg value="-Xlint"/>
 		</javac>
