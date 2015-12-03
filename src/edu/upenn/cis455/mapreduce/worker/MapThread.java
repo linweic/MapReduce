@@ -36,6 +36,7 @@ public class MapThread implements Runnable{
 				//logger.debug("----------");
 				System.out.println("[mapthread] "+Thread.currentThread().getName()+":"+strings[0]+"\t"+strings[1]);
 				WorkerServlet.keysRead++;
+				//System.out.println("entering wordcount...");
 				job.map(strings[0], strings[1], context);
 				/*
 				MessageDigest md = MessageDigest.getInstance("SHA-1");

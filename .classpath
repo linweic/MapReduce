@@ -4,5 +4,6 @@
 	<classpathentry kind="lib" path="lib/servlet-api.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/log4j-1.2.9.jar"/>
+	<classpathentry kind="lib" path="/home/cis455/workspace/hw3/lib/stanford-corenlp-3.5.2.jar"/>
 	<classpathentry kind="output" path="classes/"/>
 </classpath>
